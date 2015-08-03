@@ -1,4 +1,5 @@
 require 'aws-sdk'
+require 'ipaddress'
 
 class Aws_Manage
   @@image_id = 'ami-d05e75b8'
@@ -16,7 +17,8 @@ class Aws_Manage
 
   end
 
-  def start_instance
+  # start new instance
+  def create_instance
     start = @@ec2.run_instances(
         image_id: @@image_id,
         min_count: 1,
@@ -30,8 +32,31 @@ class Aws_Manage
 
     instance_id = instances[0].instance_id
   end
+
+  # fetch public ip for specific instance
+  def fetch_public_ip(instance_id)
+    while true do
+      desc = @@ec2.describe_instances({
+                                         instance_ids: [instance_id]
+                                     })
+      ipaddr = desc.reservations[0].instances[0].public_ip_address
+      if (IPAddress.valid? ipaddr)
+        return ipaddr
+        break
+      end
+      sleep 5
+      yield
+    end
+  end
 end
+
 
 aws = Aws_Manage.new
 
-puts aws.start_instance
+instance_id = aws.create_instance
+
+print "Waiting for public ip"
+
+ip_address = aws.fetch_public_ip(instance_id) { print "." }
+
+puts " Found: #{ip_address}"
