@@ -1,0 +1,2 @@
+class Aws_Manage
+end
