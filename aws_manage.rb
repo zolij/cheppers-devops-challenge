@@ -42,7 +42,6 @@ class Aws_Manage
       ipaddr = desc.reservations[0].instances[0].public_ip_address
       if (IPAddress.valid? ipaddr)
         return ipaddr
-        break
       end
       sleep 5
       yield
