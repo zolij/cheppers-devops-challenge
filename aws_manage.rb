@@ -56,14 +56,48 @@ class Aws_Manage
   end
 end
 
+# menu methods
+def create_new_instance
+  print "Start new instance... "
+  instance_id = $aws.create_instance
+  puts "done (instance id: #{instance_id}"
+  return instance_id
+end
 
-aws = Aws_Manage.new
-begin
-instance_id = aws.create_instance
+def get_public_ip(instance_id = nil)
+  if instance_id.nil?
+    puts "no instance id"
+    return
+  end
 
-print "Waiting for public ip"
+  print "Waiting for public ip"
+  ip_address = $aws.fetch_public_ip(instance_id) { print "." }
+  puts " Found: #{ip_address}"
+end
 
-ip_address = aws.fetch_public_ip(instance_id) { print "." }
+def terminate_instance(instance_id = nil)
+  puts "nothing here yet"
+end
 
-puts " Found: #{ip_address}"
+
+# main program
+
+$aws = Aws_Manage.new
+
+puts "Choose an option"
+puts "1. create new instance"
+puts "2. get instances public ip"
+puts "3. terminate an instance"
+print "Your choice (number): "
+choice = gets.chomp
+
+case choice.to_i
+  when 1
+    create_new_instance
+  when 2
+    get_public_ip
+  when 3
+    terminate_instance
+  else
+    puts "Please choose a number from the list"
 end
