@@ -40,6 +40,14 @@ class Aws_Manage
     instance_id = instances[0].instance_id
   end
 
+  def get_instance_ids
+    ids = Array.new
+    @@ec2.describe_instances.reservations[0].instances.each do |instance|
+      ids.push(instance.instance_id)
+    end
+    return ids
+  end
+
   # fetch public ip for specific instance
   def fetch_public_ip(instance_id)
     while true do
