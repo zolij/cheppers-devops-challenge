@@ -1,5 +1,6 @@
 require 'aws-sdk'
 require 'ipaddress'
+require 'yaml'
 
 class Aws_Manage
   @@image_id = 'ami-d05e75b8'
@@ -9,11 +10,17 @@ class Aws_Manage
     # windows openssl hack
     Aws.use_bundled_cert!
 
-    # aws region setting
-    Aws.config[:region] = 'us-east-1'
+    # load config
+    @config = YAML.load_file 'config.yaml'
+
+    # set region
+    Aws.config[:region] = @config['region']
+
+    # set login credentials
+    Aws.config[:credentials] = Aws::Credentials.new(@config['access_key_id'], @config['secret_access_key'])
 
     # ec2 client initialization (class scope)
-    @@ec2 = Aws::EC2::Client.new()
+    @@ec2 = Aws::EC2::Client.new
 
   end
 
@@ -51,7 +58,7 @@ end
 
 
 aws = Aws_Manage.new
-
+begin
 instance_id = aws.create_instance
 
 print "Waiting for public ip"
@@ -59,3 +66,4 @@ print "Waiting for public ip"
 ip_address = aws.fetch_public_ip(instance_id) { print "." }
 
 puts " Found: #{ip_address}"
+end
