@@ -41,9 +41,11 @@ class Aws_Manage
   end
 
   def get_instance_ids
-    ids = Array.new
-    @@ec2.describe_instances.reservations[0].instances.each do |instance|
-      ids.push(instance.instance_id)
+    ids = Hash.new
+    @@ec2.describe_instances.reservations.each do |reservation|
+      reservation.instances.each do |instance|
+        ids[instance.instance_id] = instance.state.name
+      end
     end
     return ids
   end
@@ -52,8 +54,8 @@ class Aws_Manage
   def fetch_public_ip(instance_id)
     while true do
       desc = @@ec2.describe_instances({
-                                         instance_ids: [instance_id]
-                                     })
+                                          instance_ids: [instance_id]
+                                      })
       ipaddr = desc.reservations[0].instances[0].public_ip_address
       if (IPAddress.valid? ipaddr)
         return ipaddr
@@ -68,7 +70,7 @@ end
 def create_new_instance
   print "Start new instance... "
   instance_id = $aws.create_instance
-  puts "done (instance id: #{instance_id}"
+  puts "done (instance id: #{instance_id})"
   return instance_id
 end
 
