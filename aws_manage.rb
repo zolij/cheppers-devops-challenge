@@ -48,9 +48,15 @@ class Aws_Manage
     return terminate
   end
 
-  def get_instance_ids
+  def get_instance_ids(running_only = false)
     ids = Hash.new
-    @@ec2.describe_instances.reservations.each do |reservation|
+    filter_hash = Hash.new
+    filter_hash = {name:  'instance-state-name', values: ['running']} if running_only
+    desc = @@ec2.describe_instances({
+                                        filters: [ filter_hash ]
+                                    })
+
+    desc.reservations.each do |reservation|
       reservation.instances.each do |instance|
         ids[instance.instance_id] = instance.state.name
       end
@@ -84,8 +90,8 @@ end
 
 def get_public_ip(instance_id = nil)
   if instance_id.nil?
-    @ids = $aws.get_instance_ids
-    if @ids.nil?
+    @ids = $aws.get_instance_ids(true)
+    if @ids.nil? || @ids.size == 0
       puts "No running instances"
       return false
     end
