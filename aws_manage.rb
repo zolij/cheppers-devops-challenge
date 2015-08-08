@@ -26,18 +26,26 @@ class Aws_Manage
 
   # start new instance
   def create_instance
-    start = @@ec2.run_instances(
-        image_id: @@image_id,
-        min_count: 1,
-        max_count: 1,
-        instance_type: 't2.micro',
-        key_name: 'sajat',
-        security_group_ids: ['cheppers'],
-    )
+    start = @@ec2.run_instances({
+                                    image_id: @@image_id,
+                                    min_count: 1,
+                                    max_count: 1,
+                                    instance_type: 't2.micro',
+                                    key_name: 'sajat',
+                                    security_group_ids: ['cheppers'],
+                                })
 
     instances = start.instances
 
     instance_id = instances[0].instance_id
+  end
+
+  # terminate an instance
+  def terminate_instance(instance_id)
+    terminate = @@ec2.terminate_instances({
+                                              instance_ids: [instance_id]
+                                          })
+    return terminate
   end
 
   def get_instance_ids
@@ -76,17 +84,34 @@ end
 
 def get_public_ip(instance_id = nil)
   if instance_id.nil?
-    puts "no instance id"
-    return
+    @ids = $aws.get_instance_ids
+    if @ids.nil?
+      puts "No running instances"
+      return false
+    end
+    if @ids.size == 1
+      instance_id = @ids.keys[0]
+    end
   end
 
   print "Waiting for public ip"
-  ip_address = $aws.fetch_public_ip(instance_id) { print "." }
-  puts " Found: #{ip_address}"
+  @ip_address = $aws.fetch_public_ip(instance_id) { print "." }
+  puts " Found: #{@ip_address}"
 end
 
 def terminate_instance(instance_id = nil)
-  puts "nothing here yet"
+  if instance_id.nil?
+    @ids = $aws.get_instance_ids
+    if @ids.nil?
+      puts "No running instances"
+      return false
+    end
+    if @ids.size == 1
+      instance_id = @ids.keys[0]
+    end
+  end
+
+  return $aws.terminate_instance(instance_id)
 end
 
 
