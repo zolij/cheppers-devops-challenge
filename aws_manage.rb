@@ -107,16 +107,38 @@ end
 
 def terminate_instance(instance_id = nil)
   if instance_id.nil?
-    @ids = $aws.get_instance_ids
-    if @ids.nil?
+    @ids = $aws.get_instance_ids(true)
+    if @ids.nil? || @ids.size == 0
       puts "No running instances"
       return false
     end
     if @ids.size == 1
       instance_id = @ids.keys[0]
     end
+    if @ids.size > 1
+      puts "Multiple instances found, please choose one of them. Type \"all\" to terminate all."
+      counter = 1
+      @ids.each_key { |id|
+        puts "#{counter}. #{id}"
+        counter+=1
+      }
+      print "Your choice: "
+      choice = gets.chomp
+      if(choice == "all")
+        @ids.each_key { |id| terminate_instance(id)}
+        return true
+      else
+        if choice.to_i > 0 && choice.to_i < counter
+          instance_id = @ids.keys[choice.to_i-1]
+        else
+          puts "You have to select from the list, exiting..."
+          return false
+        end
+      end
+    end
   end
 
+  puts "Instance terminated (id: #{instance_id})"
   return $aws.terminate_instance(instance_id)
 end
 
