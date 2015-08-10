@@ -1,6 +1,8 @@
+require 'rubygems'
 require 'aws-sdk'
 require 'ipaddress'
 require 'yaml'
+require 'net/ssh'
 
 class Aws_Manage
   @@image_id = 'ami-d05e75b8'
@@ -78,6 +80,19 @@ class Aws_Manage
       yield
     end
   end
+
+  def install_application(instance_id, package_name)
+    @ipaddr = $aws.fetch_public_ip(instance_id)
+    @ssh = Net::SSH.start(@ipaddr, 'ubuntu', :host_key => "ssh_rsa", :encryption => "blowfish-cbc", :keys => [ "#{Dir.home}/Dropbox/id_rsa" ], :compression => "zlib")
+    if @ssh.exec!("dpkg -l #{package_name} &> /dev/null;echo $?").to_i > 0
+      @res = @ssh.exec!("sudo apt-get update && sudo apt-get install #{package_name} -y")
+      if @ssh.exec!("dpkg -l #{package_name} &> /dev/null;echo $?").to_i > 0
+        return false
+      end
+    end
+    @ssh.close
+    return true
+  end
 end
 
 # menu methods
@@ -142,6 +157,15 @@ def terminate_instance(instance_id = nil)
   return $aws.terminate_instance(instance_id)
 end
 
+def install_package(package)
+  @ret = $aws.install_application('i-5909c2f2', package)
+  if(!@ret)
+    puts "Package installation (#{package}) was unsuccessful"
+  else
+    puts "Package #{package} installed successful"
+  end
+end
+
 
 # main program
 
@@ -151,6 +175,7 @@ puts "Choose an option"
 puts "1. create new instance"
 puts "2. get instances public ip"
 puts "3. terminate an instance"
+puts "4. install puppet"
 print "Your choice (number): "
 choice = gets.chomp
 
@@ -161,6 +186,8 @@ case choice.to_i
     get_public_ip
   when 3
     terminate_instance
+  when 4
+    install_package('puppet')
   else
     puts "Please choose a number from the list"
 end
