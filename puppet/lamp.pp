@@ -22,6 +22,7 @@ package { 'mysql-server':
 
 # ensure mysql service is running
 service { 'mysql':
+  require => Package['mysql-server'],   # require mysql-server install before checking
   ensure => running,
 }
 
