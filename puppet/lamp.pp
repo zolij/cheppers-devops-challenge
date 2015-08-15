@@ -27,7 +27,7 @@ service { 'mysql':
 }
 
 # install php5 package
-package { 'php5':
+package { ['php5', 'php5-mysql', 'php5-gd']:
   require => Exec['apt-update'],        # require 'apt-update' before installing
   ensure => installed,
 }
